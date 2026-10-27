@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Quản trị - Duyệt ý kiến Hội nghị đối thoại</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tệp cấu hình — chỉnh link và mật khẩu tại đây -->
+    <script src="config.js"></script>
+    <!-- Thư viện xuất file Word (.docx) — có CDN dự phòng nếu CDN chính lỗi -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"
+            onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/docx@8.5.0/build/index.umd.js';document.head.appendChild(s);"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"
+            onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js';document.head.appendChild(s);"></script>
+    <style>
+        :root {
+            --primary: #1565C0;
+            --primary-light: #1E88E5;
+            --primary-dark: #0D47A1;
+            --accent: #E65100;
+            --success: #2E7D32;
+            --warning: #F57F17;
+            --danger: #B71C1C;
+            --teal: #00ACC1;
+            --purple: #7C4DFF;
+            --surface: #FFFFFF;
+            --surface2: #F0F4FF;
+            --bg: #E8EEF9;
+            --text: #0D1B2A;
+            --text2: #4A6080;
+            --border: #C5D3E8;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-sm: 0 2px 8px rgba(13,71,161,0.08);
+            --shadow-md: 0 6px 20px rgba(13,71,161,0.12);
+            --shadow-lg: 0 12px 32px rgba(13,71,161,0.18);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: var(--text);
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        .login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(150deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+     
+        .login-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 6px;
+        }
+
+        .login-subtitle {
+            font-size: 0.8rem;
+            color: var(--text2);
+            margin-bottom: 28px;
+        }
+
+        .pw-wrap {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .pw-wrap input {
+            width: 100%;
+            padding: 13px 44px 13px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--text);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .pw-wrap input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(30,136,229,0.15);
+        }
+
+        .pw-toggle {
+            position: absolute;
+            right: 14px; top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text2);
+            font-size: 1rem;
+            padding: 4px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(13,71,161,0.35);
+            transition: all 0.25s;
+        }
+
+        .btn-login:active { transform: scale(0.98); }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text2);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 18px;
+            padding: 6px 12px;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary); background: var(--surface2); }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-top: 12px;
+            display: none;
+        }
+
+        /* ===== ADMIN PANEL ===== */
+        .admin-panel { display: none; padding-bottom: 72px; }
+        .admin-panel.show { display: block; }
+
+        /* ===== HEADER ===== */
+        .app-header {
+            background: linear-gradient(150deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+            padding: 12px 16px 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .header-info {
+    flex: 1;
+    text-align: center;
+}
+
+.header-info h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 3px;
+}
+
+  .header-info p { color: rgba(255,255,255,0.7); font-size: 0.78rem; font-weight: 500; }
+
+   .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.toggle-form-btn {
+    margin-right: auto;
+}
+
+.btn-logout {
+    margin-left: auto;
+}
+
+.btn-logout {
+    margin-left: 12px;
+}
+
+        .btn-logout {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 7px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+        }
+
+        .btn-export {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 7px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-export:active { transform: scale(0.94); background: rgba(255,255,255,0.3); }
+        .btn-export:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Nút bật/tắt form - cải thiện giao diện */
+        .toggle-form-btn {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition:
+        transform 0.08s ease,
+        filter 0.15s ease,
+        box-shadow 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    will-change: transform;
+}
+
+.toggle-form-btn:active {
+    transform: scale(0.88) rotate(-1deg);
+    filter: brightness(1.18);
+    box-shadow:
+        0 0 0 4px rgba(255,255,255,0.10),
+        0 0 18px rgba(255,255,255,0.25);
+}
+ 
+.toggle-form-btn:hover {
+    transform: translateY(-1px);
+}
+
+        .toggle-form-btn.on {
+            background: rgba(46, 125, 50, 0.85);
+            border-color: rgba(76, 175, 80, 0.6);
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .toggle-form-btn.off {
+            background: rgba(183, 28, 28, 0.85);
+            border-color: rgba(244, 67, 54, 0.6);
+            box-shadow: 0 0 8px rgba(244, 67, 54, 0.3);
+        }
+
+        .toggle-form-btn i { font-size: 0.9rem; }
+        .toggle-form-btn .status-badge {
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            padding: 2px 8px;
+            margin-left: 4px;
+        }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 12px 8px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-icon { font-size: 1.1rem; margin-bottom: 4px; }
+        .stat-num {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            display: block;
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+
+        .stat-label { font-size: 0.62rem; color: var(--text2); font-weight: 600; }
+
+        /* ===== ĐỒNG HỒ ĐẾM NGƯỢC PHÁT BIỂU (theo dõi từ xa) ===== */
+        .timer-watch-card {
+            margin: 16px 16px 0;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 5px solid var(--border);
+            transition: border-color .25s, background .25s;
+        }
+        .timer-watch-card .tw-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+        .timer-watch-card .tw-row { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+        .timer-watch-card .tw-tag {
+            flex: none; width: 92px; font-weight: 700; font-size: 0.62rem;
+            text-transform: uppercase; letter-spacing: .03em; color: var(--text2);
+            padding-top: 2px;
+        }
+        .timer-watch-card .tw-name {
+            font-weight: 800; font-size: 0.82rem; color: var(--text);
+            white-space: normal; word-break: break-word; min-width: 0; line-height: 1.3;
+        }
+        .timer-watch-card .tw-current .tw-name { color: var(--primary-dark); }
+        .timer-watch-card .tw-time {
+            flex: none; font-weight: 900; font-size: 1.7rem; font-variant-numeric: tabular-nums;
+            color: var(--text2); letter-spacing: .02em;
+            min-width: 5ch; text-align: right;
+        }
+        .timer-watch-card.tw-running { border-left-color: var(--success); background: #F1F9F1; }
+        .timer-watch-card.tw-running .tw-time { color: var(--success); }
+        .timer-watch-card.tw-warn { border-left-color: var(--danger); background: #FDEEEE; }
+        .timer-watch-card.tw-warn .tw-time { color: var(--danger); animation: twPulse 1s infinite; }
+        .timer-watch-card.tw-stopped { border-left-color: var(--warning); }
+        @keyframes twPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+        @media (max-width: 380px) {
+            .timer-watch-card .tw-tag { width: 74px; font-size: 0.56rem; }
+            .timer-watch-card .tw-name { font-size: 0.76rem; }
+            .timer-watch-card .tw-time { font-size: 1.4rem; }
+        }
+
+        /* ===== LIST ===== */
+        .list-section { padding: 0 16px 16px; }
+
+        .list-container {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .list-container::-webkit-scrollbar { width: 3px; }
+        .list-container::-webkit-scrollbar-track { background: transparent; }
+        .list-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .reg-item {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 13px 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 1.5px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .reg-item:active { transform: scale(0.99); }
+        .reg-item.pending  { border-left-color: var(--warning); }
+        .reg-item.approved { border-left-color: var(--success); }
+        .reg-item.chu_toa  { border-left-color: var(--accent); }
+
+        .reg-info { flex: 1; min-width: 0; }
+
+        .reg-name {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: var(--text);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .reg-kdc {
+            font-size: 0.7rem;
+            color: var(--text2);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .reg-nd {
+            font-size: 0.72rem;
+            color: var(--text2);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+        }
+
+        .reg-stt {
+            font-size: 0.68rem;
+            font-weight: 700;
+            margin-top: 3px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.64rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .badge.pending  { background: #FFF8E1; color: #E65100; }
+        .badge.approved { background: #E8F5E9; color: #2E7D32; }
+        .badge.chu_toa  { background: #FBE9E7; color: #BF360C; }
+
+        .delete-icon {
+            color: var(--danger);
+            background: #FFEBEE;
+            width: 32px; height: 32px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .delete-icon:active { background: var(--danger); color: white; }
+
+        .delete-all-btn {
+            background: linear-gradient(135deg, #D32F2F, #B71C1C);
+            color: white;
+            border: none;
+            padding: 13px 20px;
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 14px;
+            font-size: 0.88rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(183,28,28,0.35);
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            align-items: flex-end;
+            padding: 0;
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-box {
+            background: white;
+            border-radius: 28px 28px 0 0;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            animation: slideModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideModal {
+            from { transform: translateY(60px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-handle {
+            width: 40px; height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            margin: 14px auto 0;
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-head h3 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+
+        .modal-close {
+            width: 32px; height: 32px;
+            background: var(--surface2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text2);
+            font-size: 1rem;
+        }
+
+        .modal-body { padding: 16px 20px 28px; }
+
+        .info-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            font-size: 0.84rem;
+        }
+
+        .info-chip i { color: var(--primary-light); width: 16px; text-align: center; flex-shrink: 0; }
+        .info-chip strong { color: var(--text2); font-size: 0.72rem; min-width: 70px; }
+        .info-chip span { color: var(--text); font-weight: 600; }
+
+        .nd-box {
+            background: var(--surface2);
+            border-left: 4px solid var(--primary-light);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            margin: 10px 0 18px;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 180px;
+            overflow-y: auto;
+            color: var(--text2);
+        }
+
+        /* ===== DUYỆT AREA ===== */
+        .duyet-wrap {
+            background: var(--surface2);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .duyet-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .type-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+
+        .type-btn {
+            flex: 1;
+            padding: 10px 6px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            background: white;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-family: inherit;
+            transition: all 0.2s;
+            color: var(--text2);
+        }
+
+        .type-btn i { display: block; font-size: 1rem; margin-bottom: 4px; }
+        .type-btn.sel-pb { border-color: var(--success); background: #E8F5E9; color: var(--success); }
+        .type-btn.sel-ct { border-color: var(--accent); background: #FBE9E7; color: var(--accent); }
+
+        .panel { display: none; }
+        .panel.show { display: block; }
+
+        .fg { margin-bottom: 12px; }
+
+        .fg label {
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .fg input, .fg textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text);
+            background: white;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .fg input:focus, .fg textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+        }
+
+        .stt-input-wrap {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stt-input-wrap input { flex: 1; min-width: 0; }
+
+        .btn-auto-stt {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 14px;
+            border: 1.5px solid var(--primary-light);
+            border-radius: var(--radius-md);
+            background: var(--surface2);
+            color: var(--primary-dark);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-auto-stt:active { transform: scale(0.96); background: #DCE6FA; }
+
+        .feedback-box {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 8px 0;
+            margin-bottom: 16px;
+        }
+
+        .feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            padding: 0 4px;
+        }
+
+        .feedback-header i { font-size: 1rem; color: var(--accent); }
+        .feedback-hint {
+            font-size: 0.7rem;
+            color: #6B85A3;
+            margin-top: 8px;
+            padding: 0 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nd-check-list {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            background: white;
+            max-height: 130px;
+            overflow-y: auto;
+            padding: 6px 10px;
+        }
+
+        .nd-check-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.84rem;
+            color: var(--text);
+            border-bottom: 1px solid #F0F4F8;
+            transition: background 0.15s;
+        }
+
+        .nd-check-item:last-child { border-bottom: none; }
+        .nd-check-item:hover { background: var(--surface2); }
+        .nd-check-item:has(input:checked) { background: #EEF6FF; }
+
+        .nd-check-item .item-text {
+            flex: 1;
+            line-height: 1.4;
+            padding-right: 12px;
+        }
+
+        .nd-check-item input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .nd-check-item input[type="checkbox"]:checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .nd-check-item input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .btn-ok {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 8px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-ok:active { transform: scale(0.98); }
+        .btn-pb { background: linear-gradient(135deg, #388E3C, #2E7D32); box-shadow: 0 4px 12px rgba(46,125,50,0.35); }
+        .btn-ct { background: linear-gradient(135deg, #F57C00, #E65100); box-shadow: 0 4px 12px rgba(230,81,0,0.35); }
+        .btn-del { background: linear-gradient(135deg, #E53935, #B71C1C); box-shadow: 0 4px 12px rgba(183,28,28,0.3); margin-top: 12px; }
+
+        .ct-info-box {
+            background: #FFF3E0;
+            border-left: 1.5px solid #E65100;
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            color: #5D2E00;
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .ct-info-box i { margin-right: 6px; color: #E65100; }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(210, 228, 255, 0.96);
+            backdrop-filter: blur(16px);
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 8px 20px;
+            border-top: 1px solid rgba(197,211,232,0.5);
+            box-shadow: 0 -4px 20px rgba(13,71,161,0.08);
+            z-index: 200;
+        }
+
+        .bottom-nav.show { display: flex; }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 14px;
+            color: var(--text2);
+            flex: 1;
+            transition: all 0.2s;
+        }
+
+        .nav-item i { font-size: 1.25rem; }
+        .nav-item span { font-size: 0.62rem; font-weight: 600; }
+        .nav-item.active { color: var(--primary); background: rgba(21,101,192,0.1); }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 82px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: var(--text);
+            color: white;
+            padding: 11px 22px;
+            border-radius: 40px;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 9999;
+            font-size: 0.82rem;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+            max-width: calc(100vw - 32px);
+        }
+
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .loading { text-align: center; padding: 36px 20px; color: var(--text2); font-size: 0.88rem; }
+        .loading i { font-size: 1.4rem; color: var(--border); display: block; margin-bottom: 10px; }
+
+        .status-ribbon {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        .status-ribbon.on { background: #4CAF50; color: white; }
+        .status-ribbon.off { background: #F44336; color: white; }
+
+        /* ===== CONFIRM MODAL (thay thế confirm() của trình duyệt) ===== */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            backdrop-filter: blur(4px);
+        }
+        .confirm-overlay.show { display: flex; }
+
+        .confirm-box {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            overflow: hidden;
+            animation: confirmPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes confirmPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        .confirm-icon-wrap {
+            background: #FFF5F5;
+            padding: 28px 20px 16px;
+            text-align: center;
+        }
+
+        .confirm-icon-wrap .ci {
+            width: 60px; height: 60px;
+            background: #FFEBEE;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 1.6rem;
+        }
+
+        .confirm-icon-wrap h3 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #B71C1C;
+            margin-bottom: 6px;
+        }
+
+        .confirm-icon-wrap p {
+            font-size: 0.82rem;
+            color: var(--text2);
+            line-height: 1.5;
+        }
+
+        .confirm-name {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .confirm-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .confirm-actions button {
+            padding: 16px 12px;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .confirm-actions button:first-child {
+            border-right: 1px solid var(--border);
+            color: var(--text2);
+        }
+        .confirm-actions button:first-child:active { background: #F5F5F5; }
+
+        .confirm-actions button:last-child {
+            color: #B71C1C;
+        }
+        .confirm-actions button:last-child:active { background: #FFEBEE; }
+
+        /* Kiểu dáng đặc biệt cho xoá toàn bộ */
+        .confirm-box.danger-all .confirm-icon-wrap { background: #FFF3E0; }
+        .confirm-box.danger-all .ci { background: #FFE0B2; }
+        .confirm-box.danger-all h3 { color: #E65100; }
+        .confirm-box.danger-all .confirm-actions button:last-child { color: #E65100; }
+        .confirm-box.danger-all .confirm-actions button:last-child:active { background: #FFF3E0; }
+    </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <div class="login-title">Quản trị viên</div>
+        <div class="login-subtitle">Quản lý ý kiến hội nghị đối thoại</div>
+
+        <div class="pw-wrap">
+            <input type="password" id="passwordInput" placeholder="Nhập mật khẩu quản trị">
+            <i class="fas fa-eye pw-toggle" id="togglePassword"></i>
+        </div>
+
+        <button class="btn-login" id="loginBtn"><i class="fas fa-lock-open"></i>&ensp;Đăng nhập</button>
+        <div class="error-msg" id="loginError">⚠ Sai mật khẩu. Vui lòng thử lại.</div>
+
+        <div class="back-link" id="backHomeBtn">
+            <i class="fas fa-arrow-left"></i> Về trang chủ
+        </div>
+    </div>
+</div>
+
+<!-- ===== ADMIN PANEL ===== -->
+<div id="adminPanel" class="admin-panel">
+
+    <div class="app-header">
+        <div class="header-top">
+            <div class="header-info">
+                <h1>Duyệt Ý Kiến</h1>
+                <p>Quản lý phát biểu tại hội nghị đối thoại</p>
+            </div>
+            <div class="header-actions">
+                <button class="toggle-form-btn" id="toggleFormBtn">
+                    <i class="fas fa-toggle-on"></i> 
+                    <span>Form ĐK:</span>
+                    <span id="formStatusText" class="status-badge">Đang tải...</span>
+                </button>
+                <button class="btn-export" id="btnExportWord">
+                    <i class="fas fa-file-word"></i> Xuất Word
+                </button>
+                <button class="btn-logout" id="btnLogout">
+                    <i class="fas fa-sign-out-alt"></i> Thoát
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đồng hồ đếm ngược phát biểu — theo dõi từ trang quản trị -->
+    <div class="timer-watch-card" id="timerWatchCard">
+        <div class="tw-body">
+            <div class="tw-row tw-current"><span class="tw-tag">Đang phát biểu</span><span class="tw-name" id="twCurrentName">—</span></div>
+            <div class="tw-row tw-next"><span class="tw-tag">Tiếp theo</span><span class="tw-name" id="twNextName">—</span></div>
+        </div>
+        <div class="tw-time" id="twTime">--:--</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">            
+            <span class="stat-num" id="numCho">0</span>
+            <div class="stat-label">Chờ duyệt</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-num" id="numDuyet">0</span>
+            <div class="stat-label">Đã duyệt</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-num" id="numCT">0</span>
+            <div class="stat-label">Đã tiếp nhận</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-num" id="numTotal">0</span>
+            <div class="stat-label">Tổng</div>
+        </div>
+    </div>
+
+    <div class="list-section">
+        <div class="list-container" id="regListContainer">
+            <div id="regList">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<div class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-filter="all">
+        <i class="fas fa-list"></i>
+        <span>Tất cả</span>
+    </div>
+    <div class="nav-item" data-filter="pending">
+        <i class="fas fa-hourglass-half"></i>
+        <span>Chờ duyệt</span>
+    </div>
+    <div class="nav-item" data-filter="approved">
+        <i class="fas fa-check-circle"></i>
+        <span>Đã duyệt</span>
+    </div>
+    <div class="nav-item" data-filter="home">
+        <i class="fas fa-home"></i>
+        <span>Trang chủ</span>
+    </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" class="modal">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-head">
+            <h3>Chi tiết & Xử lý ý kiến</h3>
+            <div class="modal-close" id="modalClose"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="modal-body">
+            <div class="info-chip"><i class="fas fa-user"></i><strong>Họ tên</strong><span id="mHoTen"></span></div>
+            <div class="info-chip"><i class="fas fa-map-marker-alt"></i><strong>Khu dân cư</strong><span id="mKDC"></span></div>
+            <div class="info-chip"><i class="fas fa-clock"></i><strong>Thời gian</strong><span id="mTime"></span></div>
+
+            <div style="font-size:0.73rem;font-weight:700;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.4px;margin:14px 0 6px">Nội dung đăng ký</div>
+            <div class="nd-box" id="mNoiDung"></div>
+
+            <div class="duyet-wrap">
+                <div class="duyet-title">✏️ Xử lý ý kiến</div>
+                <div class="type-toggle">
+                    <button class="type-btn" id="btnPB"><i class="fas fa-microphone"></i>Cho phát biểu</button>
+                    <button class="type-btn" id="btnCT"><i class="fas fa-inbox"></i>Tiếp nhận</button>
+                </div>
+
+                <div class="panel" id="panelPB">
+                    <div class="fg">
+                        <label>Thứ tự phát biểu</label>
+                        <div class="stt-input-wrap">
+                            <input type="number" id="sttPB" min="1" placeholder="Nhập số thứ tự">
+                            <button type="button" class="btn-auto-stt" id="btnAutoStt" title="Tự động điền số thứ tự tiếp theo">
+                                <i class="fas fa-bolt"></i>&ensp;Tự động
+                            </button>
+                        </div>
+                    </div>
+                    <div class="fg">
+                        <label>Nội dung được duyệt <span style="font-weight:400;color:var(--text2);text-transform:none">(bỏ tick để loại ý)</span></label>
+                        <div class="nd-check-list" id="checkList"></div>
+                    </div>
+                    <div class="fg">
+                        <label>Ghi chú thêm</label>
+                        <textarea id="ghiChuPB" rows="2" placeholder="VD: Thời gian phát biểu 3 phút..."></textarea>
+                    </div>
+                    <button class="btn-ok btn-pb" id="duyetPB">
+                        <i class="fas fa-check"></i>&ensp;Duyệt — Xếp lịch phát biểu
+                    </button>
+                </div>
+
+                <div class="panel" id="panelCT">
+                    <div class="ct-info-box">
+                        <i class="fas fa-info-circle"></i>
+                        Ý kiến sẽ được <strong>ghi nhận đã đọc</strong>, không đưa lên phát biểu trực tiếp. 
+                        Người đăng ký vẫn thấy tên mình trong danh sách <em>"Đã tiếp nhận"</em>.
+                    </div>
+                    
+                    <div class="feedback-box">
+                        <div class="feedback-header">
+                            <i class="fas fa-reply-all"></i>
+                            <span>Phản hồi từ Ban tổ chức (Tùy chọn)</span>
+                        </div>
+                        <textarea id="ghiChuCT" rows="2" 
+                            placeholder="📝 Nhập phản hồi..."
+                            style="width:100%; padding:12px; border-radius:12px; border:1.5px solid #E0E7F0; 
+                                   font-family:inherit; font-size:0.85rem; resize:vertical;
+                                   background:#FAFDFF; transition:0.2s;"></textarea>
+                        <div class="feedback-hint">
+                            <i class="fas fa-edit"></i>Có thể thêm ghi chú này nếu muốn, nội dung sẽ được hiển thị trên ứng dụng.
+                        </div>
+                    </div>
+                    
+                    <button class="btn-ok btn-ct" id="duyetCT">
+                        <i class="fas fa-check-double"></i>&ensp;Xác nhận — Đã tiếp nhận ý kiến
+                    </button>
+                </div>
+
+                <button class="btn-ok btn-del" id="deleteSingleBtn">
+                    <i class="fas fa-trash-alt"></i>&ensp;Xoá ý kiến này
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ===== MODAL XÁC NHẬN XOÁ (thay confirm() trình duyệt) ===== -->
+<div id="confirmOverlay" class="confirm-overlay">
+    <div class="confirm-box" id="confirmBox">
+        <div class="confirm-icon-wrap">
+            <div class="ci" id="confirmIcon">🗑️</div>
+            <h3 id="confirmTitle">Xác nhận xoá</h3>
+            <p id="confirmMessage">Bạn có chắc muốn xoá mục này không?</p>
+        </div>
+        <div class="confirm-actions">
+            <button id="confirmCancel">Huỷ</button>
+            <button id="confirmOk">Xoá</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===================== CẤU HÌNH (đọc từ config.js) =====================
+// Nếu config.js chưa load được, dùng giá trị dự phòng
+const WEBAPP_URL         = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.WEBAPP_URL         : '';
+const HOME_URL           = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.HOME_URL            : 'index.html';
+const AUTO_REFRESH_MS    = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.AUTO_REFRESH_MS     : 12000;
+const DEFAULT_CT_FEEDBACK_CFG = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.DEFAULT_CT_FEEDBACK : 'Đã tiếp nhận ý kiến, chủ toạ sẽ trả lời khi kết luận';
+
+// ===================== TOAST =====================
+function toast(msg, isErr = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = isErr ? '#B71C1C' : '#0D47A1';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===================== CONFIRM MODAL (thay confirm()) =====================
+/**
+ * showConfirm({ title, message, isDangerAll }) → Promise<boolean>
+ * Hiện modal xác nhận đẹp, trả về true nếu người dùng bấm Xoá.
+ */
+function showConfirm({ title = 'Xác nhận xoá', message = '', isDangerAll = false } = {}) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('confirmOverlay');
+        const box     = document.getElementById('confirmBox');
+        document.getElementById('confirmTitle').textContent   = title;
+        document.getElementById('confirmMessage').innerHTML   = message;
+        document.getElementById('confirmIcon').textContent    = isDangerAll ? '⚠️' : '🗑️';
+        document.getElementById('confirmOk').textContent      = isDangerAll ? 'Xoá tất cả' : 'Xoá';
+
+        box.classList.toggle('danger-all', isDangerAll);
+        overlay.classList.add('show');
+
+        const close = (result) => {
+            overlay.classList.remove('show');
+            btnOk.removeEventListener('click', onOk);
+            btnCancel.removeEventListener('click', onCancel);
+            resolve(result);
+        };
+        const onOk     = () => close(true);
+        const onCancel = () => close(false);
+
+        const btnOk     = document.getElementById('confirmOk');
+        const btnCancel = document.getElementById('confirmCancel');
+        btnOk.addEventListener('click', onOk);
+        btnCancel.addEventListener('click', onCancel);
+
+        // Bấm nền ngoài = huỷ
+        overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+    });
+}
+
+// ===================== SHA-256 =====================
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ===================== LOGIN =====================
+document.getElementById('backHomeBtn').addEventListener('click', () => { window.location.href = HOME_URL; });
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+    const loginBtn = document.getElementById('loginBtn');
+    const password = document.getElementById('passwordInput').value;
+    const hash = await sha256(password);
+    loginBtn.disabled = true;
+    try {
+        // Mật khẩu được kiểm tra trên server (functions/api/proxy.js), so với
+        // ADMIN_PASSWORD_HASH lưu trong biến môi trường của Cloudflare Pages.
+        // Hash gốc không còn tồn tại trong mã nguồn phía trình duyệt.
+        const result = await apiPost({ action: 'admin_login', passwordHash: hash });
+        if (result && result.success) {
+            showAdminPanel();
+            sessionStorage.setItem('admin_logged_in', 'true');
+        } else {
+            throw new Error('Sai mật khẩu');
+        }
+    } catch (e) {
+        const err = document.getElementById('loginError');
+        err.style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        setTimeout(() => err.style.display = 'none', 2500);
+    } finally {
+        loginBtn.disabled = false;
+    }
+});
+
+document.getElementById('passwordInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const inp = document.getElementById('passwordInput');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        this.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        this.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+});
+
+function showAdminPanel() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminPanel').classList.add('show');
+    document.getElementById('bottomNav').classList.add('show');
+    loadList();
+    loadFormStatus();
+    setInterval(() => loadList(), AUTO_REFRESH_MS);
+
+    // Đồng hồ đếm ngược: đồng bộ nhanh hơn (3s) để theo dõi sát hơn danh sách ý kiến
+    pollTimerWatch();
+    setInterval(pollTimerWatch, 3000);
+}
+
+document.getElementById('btnLogout').addEventListener('click', () => {
+    sessionStorage.removeItem('admin_logged_in');
+    window.location.reload();
+});
+
+if (sessionStorage.getItem('admin_logged_in') === 'true') showAdminPanel();
+
+// ===================== API =====================
+async function apiGet() {
+    const res = await fetch(WEBAPP_URL + '?action=get&t=' + Date.now());
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { console.error('apiGet parse error:', text); throw new Error('Lỗi dữ liệu từ máy chủ'); }
+}
+
+async function apiPost(payload) {
+    const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { console.error('apiPost parse error:', text); throw new Error('Lỗi dữ liệu từ máy chủ'); }
+}
+
+async function xoaMotYkien(id) { return await apiPost({ action: 'delete', id: String(id) }); }
+async function xoaToanBo()     { return await apiPost({ action: 'delete_all' }); }
+
+// ===================== QUẢN LÝ TRẠNG THÁI FORM =====================
+let currentFormEnabled = true;
+
+async function loadFormStatus() {
+    try {
+        const res = await apiGet();
+        // Xử lý cấu trúc dữ liệu mới: có thể là {data: [...], config: {...}} hoặc mảng cũ
+        let enabled = true;
+        if (res && typeof res === 'object') {
+            if (res.config && typeof res.config.formEnabled !== 'undefined') {
+                enabled = res.config.formEnabled;
+            } else if (res.formEnabled !== 'undefined') {
+                enabled = res.formEnabled;
+            }
+        }
+        currentFormEnabled = enabled;
+        updateFormButtonUI(enabled);
+    } catch (err) {
+        console.error('Lỗi load form status:', err);
+        updateFormButtonUI(true);
+    }
+}
+
+async function toggleFormStatus() {
+    try {
+        const newStatus = !currentFormEnabled;
+        const res = await apiPost({ action: 'toggle_form', enabled: newStatus });
+        if (res.success) {
+            currentFormEnabled = newStatus;
+            updateFormButtonUI(newStatus);
+            toast(newStatus ? '✅ Form đăng ký đã BẬT' : '🔴 Form đăng ký đã TẮT');
+        } else {
+            toast('Lỗi: ' + (res.error || 'Không thể cập nhật'), true);
+        }
+    } catch (err) {
+        toast('Lỗi kết nối khi toggle form', true);
+    }
+}
+
+function updateFormButtonUI(isEnabled) {
+    const btn = document.getElementById('toggleFormBtn');
+    const statusSpan = document.getElementById('formStatusText');
+    
+    if (isEnabled) {
+        btn.classList.add('on');
+        btn.classList.remove('off');
+        statusSpan.textContent = 'BẬT';
+        statusSpan.className = 'status-badge on';
+        btn.innerHTML = '<i class="fas fa-toggle-on"></i> <span>Form ĐK:</span> <span id="formStatusText" class="status-badge on">BẬT</span>';
+    } else {
+        btn.classList.add('off');
+        btn.classList.remove('on');
+        statusSpan.textContent = 'TẮT';
+        statusSpan.className = 'status-badge off';
+        btn.innerHTML = '<i class="fas fa-toggle-off"></i> <span>Form ĐK:</span> <span id="formStatusText" class="status-badge off">TẮT</span>';
+    }
+    // Gắn lại id cho span vì innerHTML đã ghi đè
+    const newSpan = btn.querySelector('#formStatusText');
+    if (newSpan) newSpan.id = 'formStatusText';
+}
+
+// ===================== XUẤT WORD (.docx) =====================
+function trangThaiText(status) {
+    if (status === 'pending') return 'Chờ duyệt';
+    if (status === 'approved') return 'Đã duyệt';
+    if (status === 'chu_toa') return 'Đã tiếp nhận';
+    return status || '';
+}
+
+async function exportAllToWord() {
+    const btn = document.getElementById('btnExportWord');
+    if (!allData || !allData.length) {
+        toast('Không có dữ liệu để xuất', true);
+        return;
+    }
+    if (typeof docx === 'undefined') {
+        toast('Không tải được thư viện xuất Word. Kiểm tra kết nối mạng.', true);
+        return;
+    }
+
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xuất...';
+
+    try {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } = docx;
+
+        // Sắp xếp: chờ duyệt trước (mới nhất trước), sau đó theo thứ tự phát biểu
+        const sorted = [...allData].sort((a, b) => {
+            if (a.status === 'pending' && b.status !== 'pending') return -1;
+            if (a.status !== 'pending' && b.status === 'pending') return 1;
+            if (a.status === 'pending' && b.status === 'pending') return new Date(b.timestamp) - new Date(a.timestamp);
+            return (parseInt(a.thuTu) || 999) - (parseInt(b.thuTu) || 999);
+        });
+
+        // Dòng thông tin đơn giản: "Nhãn: giá trị" — không dùng bảng/khung
+        function infoLine(label, value) {
+            return new Paragraph({
+                spacing: { after: 40 },
+                children: [
+                    new TextRun({ text: label + ' ', bold: true, size: 20 }),
+                    new TextRun({ text: value || '—', size: 20 })
+                ]
+            });
+        }
+
+        const children = [];
+
+        children.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            heading: HeadingLevel.HEADING_1,
+            children: [new TextRun({ text: 'DANH SÁCH Ý KIẾN CỬ TRI', bold: true, size: 32 })]
+        }));
+        children.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 200 },
+            children: [new TextRun({
+                text: `Hội nghị đối thoại năm 2026 — Xuất ngày ${new Date().toLocaleString('vi-VN')} — Tổng số: ${allData.length} ý kiến`,
+                italics: true, size: 20, color: '4A6080'
+            })]
+        }));
+
+        sorted.forEach((item, idx) => {
+            children.push(new Paragraph({
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 300, after: 120 },
+                children: [new TextRun({ text: `${idx + 1}. ${item.hoTen || 'Không rõ tên'}`, bold: true, size: 24, color: '0D47A1' })]
+            }));
+
+            children.push(infoLine('Khu dân cư:', item.khuDanCu));
+            children.push(infoLine('Thời gian:', item.timestamp ? new Date(item.timestamp).toLocaleString('vi-VN') : ''));
+            children.push(infoLine('Trạng thái:', trangThaiText(item.status)));
+            if (item.status === 'approved' && item.thuTu) {
+                children.push(infoLine('STT phát biểu:', String(item.thuTu)));
+            }
+
+            children.push(new Paragraph({
+                spacing: { before: 150 },
+                children: [new TextRun({ text: 'Nội dung đăng ký:', bold: true, size: 20 })]
+            }));
+            (item.noiDung || '—').split('\n').forEach(line => {
+                children.push(new Paragraph({ children: [new TextRun({ text: line, size: 20 })] }));
+            });
+
+            if (item.noiDungDuyet) {
+                children.push(new Paragraph({
+                    spacing: { before: 100 },
+                    children: [new TextRun({ text: 'Nội dung/Phản hồi đã duyệt:', bold: true, size: 20, color: '2E7D32' })]
+                }));
+                item.noiDungDuyet.split('\n').forEach(line => {
+                    children.push(new Paragraph({ children: [new TextRun({ text: line, size: 20 })] }));
+                });
+            }
+
+            children.push(new Paragraph({
+                spacing: { after: 200 },
+                border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'C5D3E8' } },
+                children: [new TextRun({ text: '', size: 2 })]
+            }));
+        });
+
+        const doc = new Document({
+            sections: [{ properties: {}, children }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        const fileName = `Y_kien_cu_tri_${new Date().toISOString().slice(0, 10)}.docx`;
+        saveAs(blob, fileName);
+        toast('✅ Đã xuất file Word thành công!');
+    } catch (err) {
+        console.error('Export docx error:', err);
+        toast('Lỗi khi xuất file Word: ' + err.message, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
+document.getElementById('btnExportWord').addEventListener('click', exportAllToWord);
+
+// ===================== DANH SÁCH =====================
+let curFilter = 'all';
+let allData = [];
+
+// ===================== ĐỒNG HỒ ĐẾM NGƯỢC PHÁT BIỂU (chỉ theo dõi) =====================
+// Đọc chung "trạng thái LED" với dieukhien.html / hienthi.html để hiển thị gọn ngay
+// trên trang quản trị: người đang phát biểu, người tiếp theo, và đồng hồ đếm ngược —
+// giúp admin theo dõi mà không cần nhìn lên màn hình LED.
+const LED_STATE_KEY = 'led_display_state_v2';
+const LED_CHANNEL_NAME = 'led_display_channel_v2';
+const TW_TIMER_DURATION = 300; // 5 phút (giây) — khớp với dieukhien.html / hienthi.html
+
+let twTimerState = { duration: TW_TIMER_DURATION, startedAt: null, running: false, manualStop: false };
+let twStarted = false;
+let twCurrentId = null;
+
+function twFmtMMSS(sec) {
+    sec = Math.max(0, Math.ceil(sec));
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+}
+
+function twGetApprovedList(data) {
+    return (data || []).filter(i => i.status === 'approved' && i.thuTu !== '' && i.thuTu != null)
+        .sort((a, b) => (parseInt(a.thuTu) || 0) - (parseInt(b.thuTu) || 0));
+}
+
+// state ở đây có cùng cấu trúc với currentState trong dieukhien.html / ledState trả về từ server:
+// { started, currentId, timer: { duration, startedAt, running, manualStop }, ... }
+function applyTwState(state) {
+    if (!state || typeof state !== 'object') return;
+    twStarted = !!state.started;
+    twCurrentId = state.currentId || null;
+    const t = state.timer;
+    if (t && typeof t === 'object') {
+        twTimerState = {
+            duration: t.duration || TW_TIMER_DURATION,
+            startedAt: t.startedAt || null,
+            running: !!t.running,
+            manualStop: !!t.manualStop
+        };
+    }
+}
+
+let twLastClass = '';
+let twLastCurText = '';
+let twLastNextText = '';
+let twLastTimeText = '';
+
+function renderTimerWatch() {
+    const card = document.getElementById('timerWatchCard');
+    const timeEl = document.getElementById('twTime');
+    const curEl = document.getElementById('twCurrentName');
+    const nextEl = document.getElementById('twNextName');
+    if (!card || !timeEl || !curEl || !nextEl) return;
+
+    // Người đang phát biểu / người tiếp theo — lấy từ danh sách đã duyệt (allData)
+    const list = twGetApprovedList(allData);
+    let idx = -1;
+    if (twCurrentId) idx = list.findIndex(i => String(i.id) === String(twCurrentId));
+    const current = idx >= 0 ? list[idx] : null;
+    const next = idx >= 0 ? (list[idx + 1] || null) : (list[0] || null);
+
+    const curText = (twStarted && current)
+        ? (current.hoTen || 'Không tên') + (current.khuDanCu ? ' — ' + current.khuDanCu : '')
+        : 'Chưa bắt đầu';
+    const nextText = next ? ((next.hoTen || 'Không tên') + (next.khuDanCu ? ' — ' + next.khuDanCu : '')) : '— Hết danh sách —';
+
+    // Chỉ ghi lại DOM khi nội dung thực sự đổi, tránh giật/nháy không cần thiết
+    if (curText !== twLastCurText) { curEl.textContent = curText; twLastCurText = curText; }
+    if (nextText !== twLastNextText) { nextEl.textContent = nextText; twLastNextText = nextText; }
+
+    // Đồng hồ đếm ngược
+    const t = twTimerState;
+    let timeText, stateClass;
+    if (t.running && t.startedAt) {
+        const remaining = t.duration - (Date.now() - t.startedAt) / 1000;
+        if (remaining <= 0) {
+            timeText = '00:00';
+            stateClass = 'tw-warn';
+        } else {
+            timeText = twFmtMMSS(remaining);
+            stateClass = remaining <= 30 ? 'tw-warn' : 'tw-running';
+        }
+    } else if (t.manualStop) {
+        timeText = twFmtMMSS(t.duration);
+        stateClass = 'tw-stopped';
+    } else {
+        timeText = twFmtMMSS(t.duration || TW_TIMER_DURATION);
+        stateClass = '';
+    }
+
+    if (timeText !== twLastTimeText) { timeEl.textContent = timeText; twLastTimeText = timeText; }
+
+    // Chỉ đổi class trên thẻ khi trạng thái (màu sắc) thực sự thay đổi —
+    // đây là nguyên nhân gây nháy: trước đây remove/add cùng một class mỗi 500ms
+    // khiến hiệu ứng transition CSS bị kích hoạt lại liên tục.
+    if (stateClass !== twLastClass) {
+        card.classList.remove('tw-running', 'tw-warn', 'tw-stopped');
+        if (stateClass) card.classList.add(stateClass);
+        twLastClass = stateClass;
+    }
+}
+
+// Đồng bộ tức thời nếu đang mở cùng thiết bị với dieukhien.html (BroadcastChannel + localStorage)
+try {
+    const savedLed = localStorage.getItem(LED_STATE_KEY);
+    if (savedLed) applyTwState(JSON.parse(savedLed));
+} catch (e) {}
+
+try {
+    if ('BroadcastChannel' in window) {
+        const twChannel = new BroadcastChannel(LED_CHANNEL_NAME);
+        twChannel.onmessage = (e) => {
+            if (e.data && e.data.type === 'state' && e.data.state) {
+                applyTwState(e.data.state);
+                renderTimerWatch();
+            }
+        };
+    }
+} catch (e) {}
+
+// Đồng bộ từ máy chủ (khác thiết bị với bộ điều khiển) — dùng chung apiGet()
+async function pollTimerWatch() {
+    try {
+        const res = await apiGet();
+        if (res && typeof res === 'object' && res.ledState) applyTwState(res.ledState);
+    } catch (e) {}
+}
+
+setInterval(renderTimerWatch, 500);
+renderTimerWatch();
+
+async function loadList() {
+    const box = document.getElementById('regList');
+    if (!box) return;
+    try {
+        const response = await apiGet();
+        
+        // XỬ LÝ CẤU TRÚC DỮ LIỆU MỚI
+        let dataArray = [];
+        if (response && typeof response === 'object') {
+            if (Array.isArray(response)) {
+                dataArray = response;
+            } else if (response.data && Array.isArray(response.data)) {
+                dataArray = response.data;
+            } else if (response.config) {
+                // Trường hợp chỉ có config, không có data
+                dataArray = [];
+            } else {
+                dataArray = [];
+            }
+        } else {
+            dataArray = [];
+        }
+        
+        allData = dataArray;
+
+        const cho = allData.filter(i => i.status === 'pending').length;
+        const duyet = allData.filter(i => i.status === 'approved').length;
+        const ct = allData.filter(i => i.status === 'chu_toa').length;
+
+        document.getElementById('numCho').textContent = cho;
+        document.getElementById('numDuyet').textContent = duyet;
+        document.getElementById('numCT').textContent = ct;
+        document.getElementById('numTotal').textContent = allData.length;
+        renderTimerWatch();
+
+        let list = allData;
+        if (curFilter === 'pending')  list = allData.filter(i => i.status === 'pending');
+        if (curFilter === 'approved') list = allData.filter(i => i.status === 'approved' || i.status === 'chu_toa');
+
+        list.sort((a, b) => {
+            if (a.status === 'pending' && b.status === 'pending') return new Date(b.timestamp) - new Date(a.timestamp);
+            return (parseInt(a.thuTu) || 999) - (parseInt(b.thuTu) || 999);
+        });
+
+        if (!list.length) {
+            box.innerHTML = '<div class="loading"><i class="fas fa-inbox"></i>Không có đăng ký nào</div>';
+            document.getElementById('deleteAllButton')?.remove();
+            return;
+        }
+
+        box.innerHTML = list.map(item => {
+            const badgeText = item.status === 'pending' ? '⏳ Chờ duyệt'
+                            : item.status === 'approved' ? '✅ Đã duyệt' : '📬 Đã tiếp nhận';
+            const ndPre = (item.noiDung || '').split('\n')[0].replace(/^•\s*/, '').substring(0, 80);
+            return `<div class="reg-item ${item.status}" data-id="${item.id}">
+                <div class="reg-info">
+                    <div class="reg-name">${escapeHtml(item.hoTen)}</div>
+                    <div class="reg-kdc"><i class="fas fa-map-marker-alt" style="color:var(--primary-light);margin-right:3px"></i>${escapeHtml(item.khuDanCu)}</div>
+                    <div class="reg-nd">${escapeHtml(ndPre)}${(item.noiDung||'').includes('\n') ? '…' : ''}</div>
+                    ${item.status === 'approved' && item.thuTu ? `<div class="reg-stt" style="color:var(--success)">📢 STT phát biểu: ${item.thuTu}</div>` : ''}
+                    ${item.status === 'chu_toa' ? `<div class="reg-stt" style="color:var(--accent)">📬 Không phát biểu trực tiếp</div>` : ''}
+                </div>
+                ${curFilter === 'all' ? `<div class="delete-icon" data-id="${item.id}" data-name="${escapeHtml(item.hoTen)}">
+                    <i class="fas fa-trash-alt"></i>
+                </div>` : ''}
+                <span class="badge ${item.status}">${badgeText}</span>
+            </div>`;
+        }).join('');
+
+        box.querySelectorAll('.reg-item').forEach(el => {
+            el.addEventListener('click', e => {
+                if (e.target.closest('.delete-icon')) return;
+                const item = allData.find(i => String(i.id) === String(el.dataset.id));
+                if (item) openModal(item);
+            });
+        });
+
+        if (curFilter === 'all') {
+            box.querySelectorAll('.delete-icon').forEach(icon => {
+                icon.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    const id = icon.dataset.id;
+                    const name = icon.dataset.name;
+                    const ok = await showConfirm({
+                        title: 'Xác nhận xoá',
+                        message: `Xoá ý kiến của <span class="confirm-name">"${name}"</span>?<br><small style="color:#999">Thao tác này không thể hoàn tác.</small>`
+                    });
+                    if (ok) {
+                        const res = await xoaMotYkien(id);
+                        if (res.success) { toast('Đã xoá thành công!'); await loadList(); }
+                        else toast('Lỗi xoá: ' + (res.error || ''), true);
+                    }
+                });
+            });
+
+            if (!document.getElementById('deleteAllButton')) {
+                const btn = document.createElement('button');
+                btn.id = 'deleteAllButton';
+                btn.className = 'delete-all-btn';
+                btn.innerHTML = '<i class="fas fa-trash-alt"></i>&ensp;Xoá toàn bộ ý kiến';
+                btn.onclick = async () => {
+                    const ok = await showConfirm({
+                        title: '⚠️ Xoá toàn bộ dữ liệu?',
+                        message: 'Tất cả ý kiến sẽ bị xoá vĩnh viễn.<br><strong style="color:#E65100">Không thể hoàn tác!</strong>',
+                        isDangerAll: true
+                    });
+                    if (ok) {
+                        const r = await xoaToanBo();
+                        if (r.success) { toast('Đã xoá toàn bộ!'); await loadList(); }
+                        else toast('Lỗi: ' + (r.error || ''), true);
+                    }
+                };
+                box.parentNode.appendChild(btn);
+            }
+        } else {
+            document.getElementById('deleteAllButton')?.remove();
+        }
+
+    } catch (err) {
+        console.error('Load list error:', err);
+        box.innerHTML = `<div class="loading" style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i>Lỗi kết nối: ${err.message}</div>`;
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]||m));
+}
+
+// ===================== MODAL =====================
+let curItem = null;
+let curLoai = 'pb';
+
+const DEFAULT_CT_FEEDBACK = DEFAULT_CT_FEEDBACK_CFG;
+
+function parseBullets(text) {
+    return (text || '').split('\n').map(l => l.replace(/^•\s*/, '').trim()).filter(Boolean);
+}
+
+function openModal(item) {
+    curItem = item;
+    document.getElementById('mHoTen').textContent = item.hoTen || '';
+    document.getElementById('mKDC').textContent = item.khuDanCu || '';
+    document.getElementById('mTime').textContent = item.timestamp ? new Date(item.timestamp).toLocaleString('vi-VN') : '';
+    document.getElementById('mNoiDung').textContent = item.noiDung || '';
+    document.getElementById('sttPB').value = item.thuTu || '';
+    document.getElementById('ghiChuPB').value = '';
+    
+    let oldFeedback = item.noiDungDuyet || '';
+    if (item.status === 'chu_toa' && !oldFeedback) {
+        oldFeedback = DEFAULT_CT_FEEDBACK;
+    }
+    document.getElementById('ghiChuCT').value = oldFeedback;
+
+    const lines = parseBullets(item.noiDung);
+    const cl = document.getElementById('checkList');
+    cl.innerHTML = '';
+    if (lines.length) {
+        lines.forEach(line => {
+            const label = document.createElement('label');
+            label.className = 'nd-check-item';
+
+            const sp = document.createElement('span');
+            sp.className = 'item-text';
+            sp.textContent = '• ' + line;
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = true;
+            cb.value = line;
+
+            label.appendChild(sp);
+            label.appendChild(cb);
+            cl.appendChild(label);
+        });
+    } else {
+        cl.innerHTML = '<div style="color:#aaa;padding:8px;font-size:0.8rem">Không có nội dung chi tiết</div>';
+    }
+
+    chonLoai(item.status === 'chu_toa' ? 'ct' : 'pb');
+    document.getElementById('modal').classList.add('show');
+}
+
+function chonLoai(loai) {
+    curLoai = loai;
+    const btnPB = document.getElementById('btnPB');
+    const btnCT = document.getElementById('btnCT');
+    const panPB = document.getElementById('panelPB');
+    const panCT = document.getElementById('panelCT');
+    if (loai === 'pb') {
+        btnPB.className = 'type-btn sel-pb';
+        btnCT.className = 'type-btn';
+        panPB.classList.add('show');
+        panCT.classList.remove('show');
+    } else {
+        btnCT.className = 'type-btn sel-ct';
+        btnPB.className = 'type-btn';
+        panCT.classList.add('show');
+        panPB.classList.remove('show');
+    }
+}
+
+document.getElementById('btnPB').onclick = () => chonLoai('pb');
+document.getElementById('btnCT').onclick = () => chonLoai('ct');
+
+async function xuLyDuyet(status) {
+    if (!curItem) return;
+    let thuTu, noiDungDuyet;
+    if (status === 'approved') {
+        thuTu = document.getElementById('sttPB').value.trim();
+        if (!thuTu) { toast('Vui lòng nhập thứ tự phát biểu', true); return; }
+        const checked = [...document.querySelectorAll('#checkList input[type="checkbox"]:checked')].map(cb => cb.value);
+        const ghiChu = document.getElementById('ghiChuPB').value.trim();
+        noiDungDuyet = (checked.length ? '• ' + checked.join('\n• ') : '') + (ghiChu ? (checked.length ? '\n' : '') + ghiChu : '');
+    } else {
+        thuTu = '';
+        let feedback = document.getElementById('ghiChuCT').value.trim();
+        if (!feedback) {
+            feedback = DEFAULT_CT_FEEDBACK;
+        }
+        noiDungDuyet = feedback;
+    }
+    try {
+        const r = await apiPost({ action: 'approve', id: curItem.id, thuTu, noiDungDuyet, status });
+        if (r.success) {
+            toast(status === 'chu_toa' ? '📬 Đã ghi nhận — tiếp nhận ý kiến!' : '✅ Đã duyệt — xếp lịch phát biểu!');
+            document.getElementById('modal').classList.remove('show');
+            await loadList();
+        } else toast('Lỗi: ' + (r.error || ''), true);
+    } catch (err) { toast('Lỗi kết nối', true); }
+}
+
+document.getElementById('duyetPB').onclick = () => xuLyDuyet('approved');
+document.getElementById('duyetCT').onclick = () => xuLyDuyet('chu_toa');
+
+// Tự động điền số thứ tự phát biểu tiếp theo: nếu chưa có ý kiến nào được duyệt -> 1,
+// nếu đã có thì lấy STT lớn nhất hiện có (trong số đã duyệt) + 1
+function tinhSttTiepTheo() {
+    const daDuyet = (allData || []).filter(i =>
+        i.status === 'approved' &&
+        (!curItem || String(i.id) !== String(curItem.id)) &&
+        i.thuTu !== undefined && i.thuTu !== null && i.thuTu !== '' &&
+        !isNaN(Number(i.thuTu))
+    );
+    if (!daDuyet.length) return 1;
+    const max = Math.max(...daDuyet.map(i => Number(i.thuTu)));
+    return max + 1;
+}
+
+document.getElementById('btnAutoStt').onclick = () => {
+    document.getElementById('sttPB').value = tinhSttTiepTheo();
+};
+
+document.getElementById('deleteSingleBtn').onclick = async () => {
+    if (!curItem) return;
+    const ok = await showConfirm({
+        title: 'Xác nhận xoá',
+        message: `Xoá ý kiến của <span class="confirm-name">"${curItem.hoTen}"</span>?<br><small style="color:#999">Thao tác này không thể hoàn tác.</small>`
+    });
+    if (ok) {
+        const r = await xoaMotYkien(curItem.id);
+        if (r.success) {
+            toast('Đã xoá!');
+            document.getElementById('modal').classList.remove('show');
+            await loadList();
+        } else toast('Xoá thất bại', true);
+    }
+};
+
+document.getElementById('modalClose').onclick = () => document.getElementById('modal').classList.remove('show');
+document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('show');
+});
+
+// ===================== BOTTOM NAV =====================
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const filter = item.dataset.filter;
+        if (filter === 'home') { window.location.href = HOME_URL; return; }
+        curFilter = filter;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('deleteAllButton')?.remove();
+        loadList();
+    });
+});
+
+document.getElementById('toggleFormBtn').addEventListener('click', toggleFormStatus);
+</script>
+</body>
+</html>
